@@ -5,10 +5,10 @@ def train_epoch(model,dataloader,creterion = nn.CrossEntropyLoss(),learning_rate
     model.train()
     train_loss = 0.0
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    for data, lable in dataloader:
+    for data, label in dataloader:
         data, label = data.to(device), label.to(device)
         output = model(data)
-        loss = creterion(output, lable)
+        loss = creterion(output, label)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

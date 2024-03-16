@@ -13,7 +13,7 @@ class Gene():
 
     def __init__(self):
         self.adj = [np.random.choice([True, False]) for _ in range(6)]
-        self.kernel_size = np.random.choice(KernelConfig.KERNEL_CHOICES, p=KernelConfig.SAMPLE_PROB, size=6).tolist()
+        self.kernel_size = np.random.choice(KernelConfig.KERNEL_CHOICES, p=KernelConfig.SAMPLE_PROB, size=4).tolist()
 
     def get_matrix(self, i, j):
         if j == 2:
@@ -28,12 +28,12 @@ class Gene():
         return False
     
     def get_prev(self, i):
-        return [j for j in range(1,7) if self.get_matrix(j, i)]
+        return [j for j in range(1,5) if self.get_matrix(j, i)]
     def has_no_prev(self, i):
         return len(self.get_prev(i)) == 0
     
     def get_after(self, i):
-        return [j for j in range(1,7) if self.get_matrix(i, j)]
+        return [j for j in range(1,5) if self.get_matrix(i, j)]
     def has_no_after(self, i):
         return len(self.get_after(i)) == 0
 
@@ -67,20 +67,18 @@ class Block(nn.Module):
         self.node_intro = Node(in_channels, block_channels, 3)
         self.nodes = nn.ModuleList([Node(block_channels, block_channels, k) for k in gene.kernel_size])
 
-        self.no_afters = [i for i in range(1,7) if self.gene.has_no_after(i)]
-        self.out_node_idx = []
-        for item in self.no_afters:
-            if not self.gene.get_prev(item):
-                self.out_node_idx.append(item)
+        self.out_node_idx = [i for i in range(1,5) if (gene.has_no_after(i)) and (not gene.has_no_prev(i))]
         self.node_outro = Node(block_channels*len(self.out_node_idx), out_channels, 3)
+        
+        self.single_node = Node(in_channels, out_channels, 3)
 
     def forward(self, x):
         if self.gene.adj.count(True) == 0:
-            return Node(self.in_ch, self.out_ch, 3)(x)
+            return self.single_node(x)
         
         x = self.node_intro(x)
         nodes_out =  []
-        for idx in range(1,7):
+        for idx in range(1,5):
             if self.gene.has_no_prev(idx):
                 nodes_out.append(self.nodes[idx-1](x))
             else:
